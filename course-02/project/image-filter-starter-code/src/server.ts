@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import {filterImageFromURL, deleteLocalFiles, checkImageURL} from './util/util';
+import {checkImageURL, deleteLocalFiles, filterImageFromURL} from './util/util';
 
 
 (async () => {
@@ -33,34 +33,43 @@ import {filterImageFromURL, deleteLocalFiles, checkImageURL} from './util/util';
   /**
    * Function get a URL and
    */
-  app.get( "/filteredimage", async ( request, response ) => {
+  app.get("/filteredimage", async (request, response) => {
     let {image_url} = request.query
     // Check if user has passed the url. if true process if not return response with 422 error
-    if (image_url){
-
-      let valid_image_url =   checkImageURL(image_url)
+    if (image_url) {
       //Check if the image url is of an image(ends with .jpg, .png etc)
-      if (valid_image_url){
-        return response.status(200).send("Image URl is valid " + image_url)
-      }
-      return response.status(400).send("Sorry can't process image,the URL is not of an image." + valid_image_url)
-    }
-    return response.status(422).send("Sorry can't process image,URl is missing")
+      if (checkImageURL(image_url)) {
+        console.log("Image URl is valid")
+        try {
+          const imagePath = await filterImageFromURL(image_url)
+          response.status(200).sendFile(imagePath, function (){
+            deleteLocalFiles([imagePath])
+          })
+        } catch (e) {
+          console.log(e)
+        }
 
-  } );
+      } else {
+        return response.status(400).send("Sorry can't process image,the URL is not of an image.")
+      }
+    } else {
+      return response.status(422).send("Sorry can't process image,URl is missing")
+    }
+
+  });
 
   //! END @TODO1
 
   // Root Endpoint
   // Displays a simple message to the user
-  app.get( "/", async ( req, res ) => {
+  app.get("/", async (req, res) => {
     res.send("try GET /filteredimage?image_url={{}}")
-  } );
+  });
 
 
   // Start the Server
-  app.listen( port, () => {
-      console.log( `server running http://localhost:${ port }` );
-      console.log( `press CTRL+C to stop server` );
-  } );
+  app.listen(port, () => {
+    console.log(`server running http://localhost:${port}`);
+    console.log(`press CTRL+C to stop server`);
+  });
 })();
