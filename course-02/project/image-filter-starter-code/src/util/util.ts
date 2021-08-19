@@ -32,3 +32,11 @@ export async function deleteLocalFiles(files:Array<string>){
         fs.unlinkSync(file);
     }
 }
+
+/**
+ * Function will check if the url is an image url
+ * @param url
+ */
+export  function checkImageURL(url: String) {
+    return  (url.match(/\.(jpeg|jpg|gif|png|tiff)$/) != null);
+}

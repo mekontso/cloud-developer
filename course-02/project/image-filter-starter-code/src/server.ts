@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import {filterImageFromURL, deleteLocalFiles, checkImageURL} from './util/util';
+
 
 (async () => {
 
@@ -9,7 +10,7 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
   // Set the network port
   const port = process.env.PORT || 8082;
-  
+
   // Use the body parser middleware for post requests
   app.use(bodyParser.json());
 
@@ -29,14 +30,33 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
   /**************************************************************************** */
 
+  /**
+   * Function get a URL and
+   */
+  app.get( "/filteredimage", async ( request, response ) => {
+    let {image_url} = request.query
+    // Check if user has passed the url. if true process if not return response with 422 error
+    if (image_url){
+
+      let valid_image_url =   checkImageURL(image_url)
+      //Check if the image url is of an image(ends with .jpg, .png etc)
+      if (valid_image_url){
+        return response.status(200).send("Image URl is valid " + image_url)
+      }
+      return response.status(400).send("Sorry can't process image,the URL is not of an image." + valid_image_url)
+    }
+    return response.status(422).send("Sorry can't process image,URl is missing")
+
+  } );
+
   //! END @TODO1
-  
+
   // Root Endpoint
   // Displays a simple message to the user
   app.get( "/", async ( req, res ) => {
     res.send("try GET /filteredimage?image_url={{}}")
   } );
-  
+
 
   // Start the Server
   app.listen( port, () => {
